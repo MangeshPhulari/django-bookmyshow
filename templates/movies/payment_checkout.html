@@ -1,0 +1,78 @@
+{% extends "users/basic.html" %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h2>Redirecting to Payment Gateway...</h2>
+
+    <div class="alert alert-warning my-3 col-md-8 col-lg-6 mx-auto">
+        Your seats are reserved for: <strong id="countdown-timer">05:00</strong>
+    </div>
+    <p>Please complete your payment within the time limit.</p>
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+
+    <form action="https://test.payu.in/_payment" method="post" id="payu-form" name="payu-form" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="key" value="{{ payu_data.key }}" />
+        <input type="hidden" name="txnid" value="{{ payu_data.txnid }}" />
+        <input type="hidden" name="amount" value="{{ payu_data.amount }}" />
+        <input type="hidden" name="productinfo" value="{{ payu_data.productinfo }}" />
+        <input type="hidden" name="firstname" value="{{ payu_data.firstname }}" />
+        <input type="hidden" name="email" value="{{ payu_data.email }}" />
+        <input type="hidden" name="phone" value="{{ payu_data.phone }}" />
+        <input type="hidden" name="surl" value="{{ payu_data.surl }}" />
+        <input type="hidden" name="furl" value="{{ payu_data.furl }}" />
+        <input type="hidden" name="hash" value="{{ payu_data.hash }}" />
+        <input type="hidden" name="udf1" value="{{ payu_data.udf1 }}" />
+        <input type="hidden" name="udf2" value="{{ payu_data.udf2 }}" />
+        <input type="hidden" name="udf3" value="{{ payu_data.udf3 }}" />
+        <input type="hidden" name="udf4" value="{{ payu_data.udf4 }}" />
+        <input type="hidden" name="udf5" value="{{ payu_data.udf5 }}" />
+    </form>
+
+     <div id="timeout-message" class="alert alert-danger mt-3 col-md-8 col-lg-6 mx-auto" style="display: none;">
+        Your reservation has expired. Please <a href="{% url 'book_seats' payu_data.udf3|default:'' %}" class="alert-link">select seats again</a>.
+     </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %} 
+<script>
+    // --- Countdown Timer Logic ---
+    const endTimeISO = "{{ reservation_end_time_iso }}";
+    const timerElement = document.getElementById('countdown-timer');
+    const payuForm = document.getElementById('payu-form');
+    const timeoutMessage = document.getElementById('timeout-message');
+    let timerInterval;
+
+    function startTimer() { /* ... (timer JS is fine) ... */ }
+    window.onload = function() { /* ... (form submit JS is fine) ... */ };
+    window.onbeforeunload = function() { clearInterval(timerInterval); };
+
+     // --- FULL TIMER JAVASCRIPT (No changes needed, copy from previous response) ---
+     function startTimer() {
+        if (!endTimeISO || !timerElement) { console.error("Timer elements not found or end time missing."); return; }
+        const endTime = new Date(endTimeISO).getTime();
+        timerInterval = setInterval(() => {
+            const now = new Date().getTime(); const distance = endTime - now;
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            if (distance < 0) {
+                clearInterval(timerInterval); timerElement.innerHTML = "EXPIRED";
+                if(timeoutMessage) timeoutMessage.style.display = 'block';
+                if(payuForm) payuForm.onsubmit = () => false;
+                alert("Your seat reservation has expired. Returning to seat selection.");
+                const theaterId = "{{ payu_data.udf3 }}";
+                if (theaterId) { window.location.href = "{% url 'book_seats' 0 %}".replace('0', theaterId); }
+                else { window.location.href = "{% url 'movie_list' %}"; }
+                return;
+            }
+            timerElement.innerHTML = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
+        }, 1000);
+    }
+    window.onload = function() { if(payuForm) { console.log("Submitting PayU form..."); payuForm.submit(); startTimer(); } else { console.error("PayU form not found"); } };
+    window.onbeforeunload = function() { clearInterval(timerInterval); };
+</script>
+{% endblock %}

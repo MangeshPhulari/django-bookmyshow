@@ -1,0 +1,21 @@
+{% extends "users/basic.html" %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="alert alert-danger col-md-8 mx-auto" role="alert"> 
+        <h1 class="alert-heading">Payment Failed <i class="fas fa-times-circle"></i></h1> 
+        <p>Unfortunately, your payment could not be processed. Your seats have not been booked.</p>
+        <hr>
+        <p class="mb-0">
+            {% if error %}
+                Reason: {{ error }}
+            {% else %}
+                Please try again or contact support if the problem persists.
+            {% endif %}
+        </p>
+    </div>
+    <a href="{% url 'movie_list' %}" class="btn btn-primary mt-3">
+       <i class="fas fa-arrow-left mr-1"></i> Back to Movies
+    </a>
+</div>
+{% endblock %}

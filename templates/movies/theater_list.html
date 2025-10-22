@@ -1,188 +1,67 @@
-{% extends "users/basic.html" %} 
+{% extends "users/basic.html" %}
 {% block content %}
 <style>
-    /* Styling */
-    body {
-  font-family: Arial, sans-serif;
-  background-color: #f8f9fa;
-  color: #333;
-  margin: 0;
-  padding: 0;
-}
+    /* Custom styles remain largely the same, but rely more on BS grid */
+    .movie-title { font-size: 2rem; font-weight: bold; text-align: center; margin-bottom: 1.5rem; }
+    .theatre-info { padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); margin-bottom: 1rem; }
+    .info-icons i { margin-right: 0.3rem; font-size: 1rem; /* Smaller icons */ }
+    .info-icons span { font-size: 0.8rem; margin-right: 1rem; } /* Added span for text */
+    .time-box {
+        border: 1px solid #dee2e6; border-radius: 5px;
+        padding: 0.5rem 0.75rem; /* Reduced padding */
+        text-align: center; background-color: #fff; /* White background */
+        transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none; display: block; /* Make it a block link */
+        color: #0d6efd; /* Link color */
+        font-weight: bold;
+    }
+    .time-box:hover {
+        transform: translateY(-3px); background-color: #e9ecef; /* Light gray hover */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        color: #0a58ca;
+    }
+    .time-box span { display: block; font-size: 0.75rem; color: #6c757d; font-weight: normal; } /* Muted text for sub-info */
+    .non-cancellable { font-size: 0.8rem; margin-top: 1rem; color: #6c757d;}
+    .no-theaters { text-align: center; margin-top: 2rem; color: #6c757d; }
+</style>
 
-.container {
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
-}
+<div class="container my-5"> 
+    <div class="movie-title">{{ movie.name }}</div>
 
-.movie-title {
-  font-size: 28px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-/* Theatre Info Styling */
-.theatre-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: 15px;
-  flex-wrap: wrap; /* Responsive wrapping */
-}
-
-.theatre-info strong {
-  font-size: 18px;
-  flex: 1;
-}
-
-/* Info Icons Styling */
-.info-icons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px; /* Space between icons */
-  margin-top: 10px;
-  flex: 2;
-}
-
-.info-icons i {
-  margin-right: 5px;
-  font-size: 18px;
-}
-
-.info-section {
-  flex: 1;
-  text-align: right;
-}
-
-/* Show Times Styling */
-.show-times {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  flex-wrap: wrap; /* Responsive wrapping */
-}
-
-.time-box {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 10px 20px;
-  text-align: center;
-  background-color: #f1f1f1;
-  margin-bottom: 10px;
-  flex: 1;
-  min-width: 100px;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-}
-
-.time-box:hover {
-  transform: scale(1.05);
-  background-color: #28a745;
-  color: white;
-}
-
-.time-box span {
-  display: block;
-  font-size: 12px;
-  color: black;
-}
-.time-box span:hover {
-  color: white;
-}
-
-/* Non-Cancellable Styling */
-.non-cancellable {
-  color: #ffc107;
-  font-size: 12px;
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-}
-
-.non-cancellable i {
-  margin-right: 5px;
-}
-
-/* Responsive Styling */
-@media (max-width: 768px) {
-  .theatre-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .info-section {
-    text-align: left;
-    margin-top: 10px;
-  }
-
-  .show-times {
-    justify-content: space-between;
-  }
-
-  .time-box {
-    flex: 1 1 100%;
-    margin-bottom: 10px;
-  }
-}
-  </style>
-  
-  <body>
-    <div class="container">
-      <!-- Movie Title -->
-      <div class="movie-title">Movie - {{ movie.name }}</div>
-  
-      <!-- Conditional Check for Theaters -->
-      {% if theaters %}
-        <!-- Theater List and Showtimes -->
+    {% if theaters %}
         {% for theater in theaters %}
         <div class="theatre-info">
-          <div>
-            <strong>{{ theater.name }} Theater</strong>
-            <div class="info-icons mt-2">
-              <i class="fas fa-mobile-alt text-success"></i> M-Ticket
-              <i class="fas fa-utensils text-warning ms-3"></i> Food & Beverage
-              <i class="fas fa-parking text-primary ms-3"></i> Parking Available
-              <i class="fas fa-wheelchair text-info ms-3"></i> Wheelchair Access
-              <i class="fas fa-glasses text-danger ms-3"></i> 3D Show Available
+            <div class="row w-100 align-items-center">
+                 <div class="col-md-6 mb-2 mb-md-0">
+                    <strong>{{ theater.name }}</strong>
+                    <div class="info-icons mt-1 d-flex flex-wrap">
+                        <span><i class="fas fa-mobile-alt text-success"></i> M-Ticket</span>
+                        <span><i class="fas fa-utensils text-warning"></i> F&B</span>
+                        
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2 justify-content-md-end">
+                        <div class="col-lg-3 col-md-4 col-sm-4 col-6"> 
+                            <a href="{% url 'book_seats' theater.id %}" class="time-box">
+                                {{ theater.time|date:"h:i A" }}
+                                <span>{{ theater.time|date:"D, M d" }}</span>
+                            </a>
+                        </div>
+                       
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-  
-        <div class="show-times">
-          <div class="time-box">
-            {{ theater.time }}
-            <a href="{% url 'book_seats' theater.id %}">
-              <span>Book Now</span>
-            </a>
-          </div>
         </div>
         {% endfor %}
-      {% else %}
-        <!-- Message when no theaters are available -->
-        <div class="no-theaters mt-4">
-          <p>Sorry, no theaters are available for this movie at the moment.</p>
+    {% else %}
+        <div class="no-theaters">
+            <p>Sorry, no showtimes available for this movie yet.</p>
         </div>
-      {% endif %}
-  
-      <div class="non-cancellable mt-4">
-        <i class="fas fa-circle text-warning"></i> Non-cancellable
-      </div>
+    {% endif %}
+
+    <div class="non-cancellable text-center">
+        <i class="fas fa-info-circle text-warning mr-1"></i> Check cancellation policy before booking.
     </div>
-  </body>
-<!-- <h1>Theater for {{movie.name}}</h1>
-<ul>
-  {% for theater in theaters %}
-  <li>
-    <strong>{{theater.name}}</strong>{{theater.time}}
-    <a href="{% url 'book_seats' theater.id %}">View Seats</a>
-  </li>
-  {% endfor %}
-</ul> -->
+</div>
 {% endblock %}

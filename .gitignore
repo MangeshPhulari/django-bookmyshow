@@ -1,0 +1,53 @@
+# Gitignore file for a Django project
+
+### Environment ###
+# Ignore the virtual environment folder. Common names are venv, env, .venv, .env
+venv/
+env/
+.venv/
+.env/
+
+# Ignore .env files containing secret keys and credentials.
+# This is the MOST IMPORTANT line for security.
+.env
+*.env
+
+
+### Django ###
+# Ignore the local SQLite database.
+db.sqlite3
+*.sqlite3
+
+# Ignore user-uploaded media files.
+media/
+mediafiles/
+
+# Ignore static files collected by the 'collectstatic' command.
+staticfiles/
+
+
+### Python ###
+# Ignore Python bytecode files and cache folders.
+*.pyc
+__pycache__/
+
+# Ignore packaging and distribution folders.
+build/
+dist/
+*.egg-info/
+
+
+### IDE / Editor ###
+# VSCode
+.vscode/
+
+
+
+### Operating System Files ###
+
+# Windows
+Thumbs.db
+
+
+### Log Files ###
+*.log

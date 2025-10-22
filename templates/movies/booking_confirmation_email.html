@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #fff; border: 1px solid #ddd; padding: 0; }
+        .header { background-color: #232f3e; color: white; padding: 20px; text-align: center; font-size: 24px; }
+        .content-block { padding: 20px; border-bottom: 1px solid #eee; }
+        .content-block h3 { margin-top: 0; }
+        .summary-table { width: 100%; }
+        .summary-table td { padding: 8px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Booking Confirmed</div>
+        <div class="content-block">
+            <p>Dear {{ user_name }},</p>
+            <p>Your movie booking is confirmed. Please show this email at the cinema entrance.</p>
+        </div>
+        <div class="content-block">
+            <h3>{{ movie_name }}</h3>
+            <p>{{ movie_language }}, 2D</p>
+            <p><strong>{{ show_time|date:"D, M d, h:i A" }}</strong></p>
+            <p>{{ theater_name }}</p>
+            <p>{{ num_tickets }} Ticket(s)</p>
+            <p><strong>Seats: {{ seats }}</strong></p>
+            <hr>
+            <p><strong>Booking ID:</strong> {{ booking_id }}</p>
+        </div>
+        <div class="content-block">
+            <h4>Booking Summary</h4>
+            <table class="summary-table">
+                <tr>
+                    <td>Ticket(s) Subtotal</td>
+                    <td style="text-align: right;">₹{{ ticket_subtotal|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Convenience Fee</td>
+                    <td style="text-align: right;">₹{{ convenience_fee|floatformat:2 }}</td>
+                </tr>
+                <tr style="font-weight: bold; border-top: 2px solid #333;">
+                    <td>Order Total</td>
+                    <td style="text-align: right;">₹{{ order_total|floatformat:2 }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
