@@ -119,6 +119,8 @@
 
 # bookmyshow/settings.py
 
+# bookmyshow/settings.py
+
 from pathlib import Path
 import os
 import dj_database_url
@@ -126,6 +128,8 @@ from decouple import config
 from decimal import Decimal
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# --- Core Security Settings ---
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
@@ -137,8 +141,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    # --- CHANGE: Moved staticfiles before cloudinary_storage ---
+    'django.contrib.staticfiles',
     'cloudinary_storage', # For Cloudinary Media Files
-    'django.contrib.staticfiles', # Must be AFTER cloudinary_storage
     'cloudinary', # Cloudinary app itself
     'users',
     'movies',
@@ -146,7 +151,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Whitenoise - Place high
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Whitenoise
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -220,11 +225,13 @@ CLOUDINARY_STORAGE = {
     'API_KEY': config('CLOUDINARY_API_KEY'),
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
     'SECURE': True,
-    # --- ADD THESE FLAGS TO PREVENT CLOUDINARY FROM INTERFERING WITH STATICFILES ---
-    'STATICFILES_MANIFEST_ROOT': STATIC_ROOT, # Point to where Whitenoise expects manifest
-    'STATIC_IMAGES_EXTENSIONS': [], # Tell Cloudinary *not* to handle static images
-    'STATIC_VIDEOS_EXTENSIONS': [], # Tell Cloudinary *not* to handle static videos
-    # You might also try adding: 'MANAGE_STATICFILES': False, if the above don't work alone
+    # --- ADD THIS FLAG ---
+    # Explicitly tell dj3-cloudinary-storage NOT to manage static files
+    'MANAGE_STATICFILES': False,
+    # Remove these if MANAGE_STATICFILES works
+    # 'STATICFILES_MANIFEST_ROOT': STATIC_ROOT,
+    # 'STATIC_IMAGES_EXTENSIONS': [],
+    # 'STATIC_VIDEOS_EXTENSIONS': [],
 }
 
 # --- Storage Backends ---
@@ -241,6 +248,6 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- Production Security Settings (Review/Uncomment as needed) ---
+# --- Production Security (Review/Uncomment as needed) ---
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # ... other security settings ...
