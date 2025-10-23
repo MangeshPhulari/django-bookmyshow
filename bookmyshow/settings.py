@@ -111,6 +111,10 @@
 
 # bookmyshow/settings.py
 
+# bookmyshow/settings.py
+
+# bookmyshow/settings.py
+
 from pathlib import Path
 import os
 import dj_database_url
@@ -119,29 +123,29 @@ from decimal import Decimal
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# --- Core Security Settings ---
 SECRET_KEY = config('SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool) # False in production
-
+DEBUG = config('DEBUG', default=False, cast=bool) # Default to False for safety
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
-# Example for Render: ALLOWED_HOSTS = ['your-app-name.onrender.com', '127.0.0.1']
+# Example for Render: ALLOWED_HOSTS='your-app-name.onrender.com,127.0.0.1' in Render Env Vars
 
+# --- Application Definition ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles', # Django staticfiles
-    'users',
-    'movies',
+    'cloudinary_storage', # For Cloudinary Media Files
+    'django.contrib.staticfiles', # Must be AFTER cloudinary_storage
+    'cloudinary', # Cloudinary app itself
+    'users', # Your user app
+    'movies', # Your movie app
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Whitenoise Middleware
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Whitenoise for static files - Place high
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -152,13 +156,13 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'bookmyshow.urls'
 AUTH_USER_MODEL = 'auth.User'
-LOGIN_URL = '/users/login/'
+LOGIN_URL = '/users/login/' # Your app's login URL
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
+        'DIRS': [BASE_DIR / 'templates'], # Project-level templates (home.html)
+        'APP_DIRS': True, # Allow app templates (users/, movies/)
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
@@ -171,46 +175,37 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bookmyshow.wsgi.application'
 
-# --- Production Database Configuration ---
+# --- Database Configuration (Render PostgreSQL / Local SQLite) ---
 DATABASE_URL = config('DATABASE_URL', default=None)
-
-if DATABASE_URL: # Use PostgreSQL in production (Render)
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600, # Optional: persistent connections
-            conn_health_checks=True, # Optional
-        )
-    }
-else: # Fallback to SQLite for local development
+if DATABASE_URL:
+    DATABASES = {'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+else: # Fallback for local dev
     DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
-# --- End Database ---
 
 # --- Session Configuration ---
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool) # Should be True in production (HTTPS)
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool) # Should be True in production
-# --- End Session ---
+SESSION_COOKIE_SECURE = not DEBUG # True in production (HTTPS)
+CSRF_COOKIE_SECURE = not DEBUG # True in production (HTTPS)
 
-# --- Email Configuration ---
+# --- Email Configuration (Example: Gmail) ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_PASS')
+EMAIL_HOST_USER = config('EMAIL_USER') # From .env or Render Env Vars
+EMAIL_HOST_PASSWORD = config('EMAIL_PASS') # From .env or Render Env Vars
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-# --- End Email ---
 
 # --- PayU Configuration ---
-PAYU_MERCHANT_KEY = config('PAYU_MERCHANT_KEY')
-PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT')
-PAYU_MODE = config('PAYU_MODE', default='TEST') # Should be 'LIVE' in production if using live keys
-# --- End PayU ---
+PAYU_MERCHANT_KEY = config('PAYU_MERCHANT_KEY') # From .env or Render Env Vars
+PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT') # From .env or Render Env Vars
+PAYU_MODE = config('PAYU_MODE', default='TEST') # 'TEST' or 'LIVE'
 
+# --- Custom App Settings ---
 CONVENIENCE_FEE = Decimal(config('CONVENIENCE_FEE', default='30.68'))
 
+# --- Password Validation ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -218,33 +213,53 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# --- Internationalization ---
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# --- Static Files Configuration ---
+# --- Static Files (Managed by Whitenoise) ---
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static'] # Where Django looks for static files locally
-STATIC_ROOT = BASE_DIR / 'staticfiles' # Where collectstatic puts files for production
-# --- End Static ---
+STATICFILES_DIRS = [BASE_DIR / 'static'] # Where Django looks locally
+STATIC_ROOT = BASE_DIR / 'staticfiles' # Target for collectstatic
 
-# --- Media Files Configuration ---
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media' # Local storage for development
-# IMPORTANT: For Render/production, configure external storage like AWS S3, Cloudinary, etc.
-# --- End Media ---
+# --- Media Files (Managed by Cloudinary) ---
+MEDIA_URL = '/media/' # Base URL path for media files on Cloudinary
+# MEDIA_ROOT is not needed when using Cloudinary as default storage
+# MEDIA_ROOT = BASE_DIR / 'media'
 
-# --- Storage Backend (Whitenoise for Static) ---
+# --- Cloudinary Configuration ---
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'), # From .env or Render Env Vars
+    'API_KEY': config('CLOUDINARY_API_KEY'),       # From .env or Render Env Vars
+    'API_SECRET': config('CLOUDINARY_API_SECRET'), # From .env or Render Env Vars
+    'SECURE': True, # Use HTTPS URLs
+}
+
+# --- Storage Backends ---
 STORAGES = {
+    # Default backend for handling MEDIA files (user uploads)
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    # Backend for handling STATIC files (CSS, JS, project images)
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
-    # Default File Storage (for media) - CHANGE FOR PRODUCTION
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
 }
-# --- End Storage ---
+# --- End Storage Backends ---
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- Production Security Settings (Uncomment and configure as needed) ---
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # If behind a proxy like Render's
+# SECURE_SSL_REDIRECT = not DEBUG # Redirect HTTP to HTTPS
+# SECURE_HSTS_SECONDS = 31536000 # Example: 1 year. Enable HSTS
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_BROWSER_XSS_FILTER = True
+# CSRF_COOKIE_SECURE = not DEBUG # Already set above
+# SESSION_COOKIE_SECURE = not DEBUG # Already set above
+# X_FRAME_OPTIONS = 'DENY'
