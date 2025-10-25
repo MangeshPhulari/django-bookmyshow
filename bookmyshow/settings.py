@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import os
-import dj_database_url  # <-- This is crucial
+import dj_database_url
 from decouple import config
 from decimal import Decimal
 
@@ -32,7 +32,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'whitenoise.runserver_nostatic',  # <-- Added for static files
+    'whitenoise.runserver_nostatic',  # For static files
+    
+    'cloudinary_storage',             # <-- Added for Cloudinary
+    'cloudinary',                     # <-- Added for Cloudinary
+    
     'django.contrib.staticfiles',
     'users',
     'movies',
@@ -40,7 +44,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- Added for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,6 +97,14 @@ PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT', default=None)
 PAYU_MODE = 'TEST'
 CONVENIENCE_FEE = Decimal(config('CONVENIENCE_FEE', default='30.68'))
 
+# --- 6. CLOUDINARY CONFIGURATION ---
+# Reads from Render's environment
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=None),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=None),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=None),
+}
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -109,7 +121,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# --- 6. STATIC FILES (WHITENOISE) ---
+# --- 7. STATIC FILES (WHITENOISE) ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # This is the folder Whitenoise will collect all static files into
@@ -118,12 +130,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-# --- 7. MEDIA FILES ---
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# --- 8. MEDIA FILES (CLOUDINARY) ---
+MEDIA_URL = '/media/'  # This is still needed
+MEDIA_ROOT = BASE_DIR / 'media' # Local fallback
+# This tells Django to use Cloudinary for all file uploads
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage' 
 
 
-# --- 8. OTHER SETTINGS ---
+# --- 9. OTHER SETTINGS ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/users/login/'
 AUTH_USER_MODEL = 'auth.User'
