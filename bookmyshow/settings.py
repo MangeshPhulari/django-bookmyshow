@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-a-safe-default-key-for-local-dev')
 
 # --- 2. DEBUG ---
-# Reads 'False' from Render's environment
+# Reads 'False' from Render's environment, 'True' locally
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # --- 3. ALLOWED_HOSTS ---
@@ -34,8 +34,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'whitenoise.runserver_nostatic',  # For static files
     
-    'cloudinary_storage',             # <-- Added for Cloudinary
-    'cloudinary',                     # <-- Added for Cloudinary
+    'cloudinary_storage',             # For Cloudinary
+    'cloudinary',                     # For Cloudinary
     
     'django.contrib.staticfiles',
     'users',
@@ -130,11 +130,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-# --- 8. MEDIA FILES (CLOUDINARY) ---
-MEDIA_URL = '/media/'  # This is still needed
-MEDIA_ROOT = BASE_DIR / 'media' # Local fallback
-# This tells Django to use Cloudinary for all file uploads
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage' 
+# --- 8. MEDIA FILES (Smart Switching) ---
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+if DEBUG:
+    # --- Development Settings ---
+    # Serve media files from the local 'media' folder
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+else:
+    # --- Production (Render) Settings ---
+    # Serve media files from Cloudinary
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
 # --- 9. OTHER SETTINGS ---
