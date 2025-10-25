@@ -6,10 +6,11 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from movies.models import Booking
-from .forms import UserRegisterForm, UserUpdateForm
+from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from .models import Profile
 from movies.models import Movie
 
-# ... (register, login_view, logout_view are correct) ...
+# ... (register, login_view remain the same) ...
 def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
@@ -21,6 +22,7 @@ def register(request):
     else:
         form = UserRegisterForm()
     return render(request, 'users/register.html', {'form': form})
+
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -31,12 +33,14 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
+
+# --- logout_view (redirects to home) ---
 def logout_view(request):
     logout(request)
     messages.info(request, "You have been successfully logged out.")
-    return redirect('movie_list')
+    return redirect('home') 
 
-# --- ADD THIS VIEW FOR THE HOMEPAGE ---
+# --- (home_view is correct) ---
 def home_view(request):
     """ Renders the main home page template and passes all movies. """
     movies = Movie.objects.all().order_by('-release_date') # Get all movies
@@ -44,17 +48,40 @@ def home_view(request):
         'movies': movies # Pass movies to the template
     }
     return render(request, 'home.html', context)
+
 @login_required
 def profile(request):
-    if request.method == 'POST':
-        u_form = UserUpdateForm(request.POST, instance=request.user)
-        if u_form.is_valid():
-            u_form.save()
-            messages.success(request, 'Your account has been updated!')
-            return redirect('profile')
-    else:
-        u_form = UserUpdateForm(instance=request.user)
+    profile, created = Profile.objects.get_or_create(user=request.user)
 
+    # --- Logic to handle two separate forms ---
+    
+    if request.method == 'POST':
+        # Check if the image form was submitted
+        if 'image' in request.FILES:
+            p_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
+            if p_form.is_valid():
+                p_form.save()
+                # messages.success(request, 'Profile picture updated!') <-- THIS LINE IS REMOVED
+                return redirect('profile')
+            else:
+                u_form = UserUpdateForm(instance=request.user)
+        
+        # Check if the details form was submitted
+        elif 'username' in request.POST:
+            u_form = UserUpdateForm(request.POST, instance=request.user)
+            if u_form.is_valid():
+                u_form.save()
+                # messages.success(request, 'Account details updated!') <-- THIS LINE IS REMOVED
+                return redirect('profile')
+            else:
+                p_form = ProfileUpdateForm(instance=profile)
+        
+    if 'u_form' not in locals():
+        u_form = UserUpdateForm(instance=request.user)
+    if 'p_form' not in locals():
+        p_form = ProfileUpdateForm(instance=profile)
+
+    # --- Booking logic (remains the same) ---
     user_bookings = Booking.objects.filter(user=request.user).order_by('-booked_at')
     
     grouped_bookings = {}
@@ -70,6 +97,7 @@ def profile(request):
     
     context = {
         'u_form': u_form,
+        'p_form': p_form,
         'grouped_bookings': grouped_bookings
     }
     

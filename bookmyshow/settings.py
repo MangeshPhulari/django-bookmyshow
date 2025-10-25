@@ -1,157 +1,46 @@
-# # bookmyshow/settings.py
-
-# from pathlib import Path
-# import os
-# import dj_database_url
-# from decouple import config
-# from decimal import Decimal # Make sure Decimal is imported if used here
-
-# BASE_DIR = Path(__file__).resolve().parent.parent
-# SECRET_KEY = config('SECRET_KEY')
-# DEBUG = True
-# ALLOWED_HOSTS = ["*"]
-
-# INSTALLED_APPS = [
-#     'django.contrib.admin',
-#     'django.contrib.auth',
-#     'django.contrib.contenttypes',
-#     'django.contrib.sessions', # Ensure sessions app is installed
-#     'django.contrib.messages',
-#     'django.contrib.staticfiles',
-#     'users',
-#     'movies',
-# ]
-
-# MIDDLEWARE = [
-#     'django.middleware.security.SecurityMiddleware',
-#     'django.contrib.sessions.middleware.SessionMiddleware', # <<< MUST BE HERE
-#     'django.middleware.common.CommonMiddleware',
-#     'django.middleware.csrf.CsrfViewMiddleware',
-#     'django.contrib.auth.middleware.AuthenticationMiddleware', # <<< MUST BE AFTER SESSION
-#     'django.contrib.messages.middleware.MessageMiddleware',
-#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-# ]
-
-# ROOT_URLCONF = 'bookmyshow.urls'
-# AUTH_USER_MODEL = 'auth.User'
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# LOGIN_URL = '/users/login/'
-
-# TEMPLATES = [
-#     {
-#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-#         'DIRS': [BASE_DIR / 'templates'], # Use BASE_DIR for consistency
-#         'APP_DIRS': True,
-#         'OPTIONS': {
-#             'context_processors': [
-#                 'django.template.context_processors.request',
-#                 'django.contrib.auth.context_processors.auth',
-#                 'django.contrib.messages.context_processors.messages',
-#             ],
-#         },
-#     },
-# ]
-
-# WSGI_APPLICATION = 'bookmyshow.wsgi.application'
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# # --- SESSION CONFIGURATION ---
-# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-# # Try setting SameSite to None for development
-# SESSION_COOKIE_SAMESITE = None
-# # Secure must be False for http://127.0.0.1
-# SESSION_COOKIE_SECURE = False
-# # -----------------------------
-
-# # EMAIL CONFIGURATION
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = config('EMAIL_USER')
-# EMAIL_HOST_PASSWORD = config('EMAIL_PASS')
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# # PAYU CONFIGURATION
-# PAYU_MERCHANT_KEY = config('PAYU_MERCHANT_KEY')
-# PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT')
-# PAYU_MODE = 'TEST'
-
-# # CONVENIENCE FEE
-# CONVENIENCE_FEE = Decimal('30.68') # Make sure Decimal is imported
-
-# # Password validation
-# AUTH_PASSWORD_VALIDATORS = [
-#     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-#     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-#     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-#     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-# ]
-
-# # Internationalization
-# LANGUAGE_CODE = 'en-us'
-# TIME_ZONE = 'UTC'
-# USE_I18N = True
-# USE_TZ = True
-
-# # Static files
-# STATIC_URL = '/static/'
-# STATICFILES_DIRS = [BASE_DIR / 'static'] # Tell Django where your project-wide static files are
-
-# # Default primary key field type
-# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# CONVENIENCE_FEE = Decimal('30.68')
-
-# bookmyshow/settings.py
-
-# bookmyshow/settings.py
-
-# bookmyshow/settings.py
-
-# bookmyshow/settings.py
-
-# bookmyshow/settings.py
-
 # bookmyshow/settings.py
 
 from pathlib import Path
 import os
-import dj_database_url
+import dj_database_url  # <-- This is crucial
 from decouple import config
 from decimal import Decimal
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- Core Security Settings ---
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
+# --- 1. SECRET KEY ---
+# Reads from Render's environment
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-a-safe-default-key-for-local-dev')
 
-# --- Application Definition ---
+# --- 2. DEBUG ---
+# Reads 'False' from Render's environment
+DEBUG = config('DEBUG', default=True, cast=bool)
+
+# --- 3. ALLOWED_HOSTS ---
+# Automatically adds your Render domain
+ALLOWED_HOSTS = ['127.0.0.1']
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    # --- CHANGE: Moved staticfiles before cloudinary_storage ---
+    'whitenoise.runserver_nostatic',  # <-- Added for static files
     'django.contrib.staticfiles',
-    'cloudinary_storage', # For Cloudinary Media Files
-    'cloudinary', # Cloudinary app itself
     'users',
     'movies',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Whitenoise
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- Added for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -161,8 +50,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'bookmyshow.urls'
-AUTH_USER_MODEL = 'auth.User'
-LOGIN_URL = '/users/login/'
 
 TEMPLATES = [
     {
@@ -181,73 +68,63 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bookmyshow.wsgi.application'
 
-# --- Database Configuration ---
-DATABASE_URL = config('DATABASE_URL', default=None)
-if DATABASE_URL:
-    DATABASES = {'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
-else: # Fallback for local dev
-    DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
+# --- 4. DATABASES ---
+# Reads from Render's 'DATABASE_URL' environment variable
+DATABASES = {
+    'default': dj_database_url.config(
+        # Default to your local sqlite db for development
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600
+    )
+}
 
-# --- Session Configuration ---
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# --- 5. PAYU / EMAIL ---
+# Reads all these from Render's environment
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_USER', default=None)
+EMAIL_HOST_PASSWORD = config('EMAIL_PASS', default=None)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# --- Email Configuration ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'; EMAIL_HOST = 'smtp.gmail.com'; EMAIL_PORT = 587; EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_USER'); EMAIL_HOST_PASSWORD = config('EMAIL_PASS'); DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# --- PayU Configuration ---
-PAYU_MERCHANT_KEY = config('PAYU_MERCHANT_KEY'); PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT'); PAYU_MODE = config('PAYU_MODE', default='TEST')
-
-# --- Custom App Settings ---
+PAYU_MERCHANT_KEY = config('PAYU_MERCHANT_KEY', default=None)
+PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT', default=None)
+PAYU_MODE = 'TEST'
 CONVENIENCE_FEE = Decimal(config('CONVENIENCE_FEE', default='30.68'))
 
-# --- Password Validation ---
-AUTH_PASSWORD_VALIDATORS = [ {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'}, {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'}, {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'}, {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'}, ]
 
-# --- Internationalization ---
-LANGUAGE_CODE = 'en-us'; TIME_ZONE = 'UTC'; USE_I18N = True; USE_TZ = True
+# Password validation
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
 
-# --- Static Files (Managed by Whitenoise) ---
+# Internationalization
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+
+# --- 6. STATIC FILES (WHITENOISE) ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# This is the folder Whitenoise will collect all static files into
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
+# This tells Whitenoise to handle compression and caching
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# --- Media Files (Managed by Cloudinary) ---
+
+# --- 7. MEDIA FILES ---
 MEDIA_URL = '/media/'
-# MEDIA_ROOT is NOT used by Cloudinary storage
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# --- Cloudinary Configuration ---
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': config('CLOUDINARY_API_KEY'),
-    'API_SECRET': config('CLOUDINARY_API_SECRET'),
-    'SECURE': True,
-    # --- ADD THIS FLAG ---
-    # Explicitly tell dj3-cloudinary-storage NOT to manage static files
-    'MANAGE_STATICFILES': False,
-    # Remove these if MANAGE_STATICFILES works
-    # 'STATICFILES_MANIFEST_ROOT': STATIC_ROOT,
-    # 'STATIC_IMAGES_EXTENSIONS': [],
-    # 'STATIC_VIDEOS_EXTENSIONS': [],
-}
 
-# --- Storage Backends ---
-STORAGES = {
-    # Default backend for handling MEDIA files -> Cloudinary
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    # Backend for handling STATIC files -> Whitenoise
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
+# --- 8. OTHER SETTINGS ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# --- Production Security (Review/Uncomment as needed) ---
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# ... other security settings ...
+LOGIN_URL = '/users/login/'
+AUTH_USER_MODEL = 'auth.User'
+CONVENIENCE_FEE = Decimal(config('CONVENIENCE_FEE', default='30.68'))

@@ -3,6 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from .models import Profile # <-- Import the new Profile model
 
 class UserRegisterForm(UserCreationForm):
     """
@@ -26,10 +27,11 @@ class UserUpdateForm(forms.ModelForm):
         model = User
         fields = ['username', 'email']
 
-# The 'ProfileUpdateForm' has been removed. Password changes should be handled
-# by Django's built-in auth views (PasswordChangeView, PasswordResetView)
-# which use secure forms like 'PasswordChangeForm'.
-#
-# In your profile.html, you correctly link to the password reset flow:
-# <a href="{% url 'password_reset' %}" ...>Reset Password</a>
-# This is the correct and secure way to handle it.
+# --- ADD THIS NEW FORM ---
+class ProfileUpdateForm(forms.ModelForm):
+    """
+    A form for updating a user's profile picture.
+    """
+    class Meta:
+        model = Profile
+        fields = ['image']
