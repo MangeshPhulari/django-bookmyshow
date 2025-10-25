@@ -10,34 +10,33 @@ from decimal import Decimal
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- 1. SECRET KEY ---
-# Reads from Render's environment
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-a-safe-default-key-for-local-dev')
 
 # --- 2. DEBUG ---
-# Reads 'False' from Render's environment, 'True' locally
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # --- 3. ALLOWED_HOSTS ---
-# Automatically adds your Render domain
 ALLOWED_HOSTS = ['127.0.0.1']
 RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 
-# Application definition
+# --- APPLICATION DEFINITION ---
+# This order is now correct to prevent conflicts.
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'whitenoise.runserver_nostatic',  # For static files
     
-    'cloudinary_storage',             # For Cloudinary
-    'cloudinary',                     # For Cloudinary
+    'whitenoise.runserver_nostatic',  # <-- Must be before staticfiles
+    'django.contrib.staticfiles',     # <-- Handles static files
     
-    'django.contrib.staticfiles',
+    'cloudinary_storage',             # <-- Handles media files
+    'cloudinary',
+    
     'users',
     'movies',
 ]
@@ -73,17 +72,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bookmyshow.wsgi.application'
 
 # --- 4. DATABASES ---
-# Reads from Render's 'DATABASE_URL' environment variable
 DATABASES = {
     'default': dj_database_url.config(
-        # Default to your local sqlite db for development
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
         conn_max_age=600
     )
 }
 
 # --- 5. PAYU / EMAIL ---
-# Reads all these from Render's environment
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -98,7 +94,6 @@ PAYU_MODE = 'TEST'
 CONVENIENCE_FEE = Decimal(config('CONVENIENCE_FEE', default='30.68'))
 
 # --- 6. CLOUDINARY CONFIGURATION ---
-# Reads from Render's environment
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=None),
     'API_KEY': config('CLOUDINARY_API_KEY', default=None),
@@ -124,9 +119,7 @@ USE_TZ = True
 # --- 7. STATIC FILES (WHITENOISE) ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-# This is the folder Whitenoise will collect all static files into
 STATIC_ROOT = BASE_DIR / 'staticfiles' 
-# This tells Whitenoise to handle compression and caching
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
@@ -136,11 +129,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 if DEBUG:
     # --- Development Settings ---
-    # Serve media files from the local 'media' folder
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 else:
     # --- Production (Render) Settings ---
-    # Serve media files from Cloudinary
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
