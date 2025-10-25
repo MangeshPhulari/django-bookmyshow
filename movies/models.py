@@ -18,7 +18,7 @@ class Movie(models.Model):
     release_date = models.DateField()
     genre = models.CharField(max_length=100, choices=GENRE_CHOICES)
     language = models.CharField(max_length=100, choices=LANGUAGE_CHOICES)
-    youtube_link = models.URLField(blank=True)
+    youtube_link = models.URLField(blank=True) # This is the correct field name
     image = models.ImageField(upload_to='movie_images/')
     rating = models.DecimalField(max_digits=3, decimal_places=1, blank=True, null=True)
     added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -26,19 +26,40 @@ class Movie(models.Model):
     def __str__(self):
         return self.name
 
+    # --- THIS FUNCTION HAS BEEN REPLACED ---
     def get_youtube_embed_url(self):
-        # ... (method code remains the same) ...
-        if not self.youtube_link: return None
+        """
+        Converts a standard YouTube 'watch' link into an 'embed' link.
+        Uses the 'youtube_link' field.
+        """
+        if not self.youtube_link:
+            return None
+        
+        video_id = None
+        
         try:
             parsed_url = urlparse(self.youtube_link)
-            if parsed_url.hostname in ('www.youtube.com', 'youtube.com'):
-                if parsed_url.path == '/watch':
-                    video_id = parse_qs(parsed_url.query).get('v');
-                    if video_id: return f"https://www.youtube.com/embed/{video_id[0]}"
-            elif parsed_url.hostname == 'youtu.be':
-                video_id = parsed_url.path[1:];
-                if video_id: return f"https://www.youtube.com/embed/{video_id}"
-        except Exception: return None
+            
+            # Standard link: https://www.youtube.com/watch?v=VIDEO_ID
+            if 'watch' in parsed_url.path:
+                query = parse_qs(parsed_url.query)
+                if 'v' in query:
+                    video_id = query['v'][0]
+            
+            # Short link: https://youtu.be/VIDEO_ID
+            elif 'youtu.be' in parsed_url.netloc:
+                video_id = parsed_url.path.lstrip('/')
+
+            if video_id:
+                # Handle potential extra parameters (like &t=... or ?t=...)
+                video_id = video_id.split('&')[0].split('?')[0]
+                return f'https://www.youtube.com/embed/{video_id}'
+
+        except Exception:
+            # Failed to parse, return None
+            return None
+        
+        # If no valid format is found, return None
         return None
 
 # ==============================================================================
@@ -78,12 +99,9 @@ class Seat(models.Model):
 # --- END Seat UPDATE ---
 
 class Booking(models.Model):
-    # --- THIS IS THE FIX ---
-    # Removed unique=True to allow multiple seats per booking ID
-    booking_id = models.CharField(max_length=100, editable=False) # Increased max_length just in case
-    
+    booking_id = models.CharField(max_length=100, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
-    seat = models.ForeignKey(Seat, on_delete=models.CASCADE) # Changed to ForeignKey
+    seat = models.ForeignKey(Seat, on_delete=models.CASCADE) 
     movie = models.ForeignKey('Movie', on_delete=models.CASCADE)
     theater = models.ForeignKey(Theater, on_delete=models.CASCADE)
     booked_at = models.DateTimeField(auto_now_add=True)
