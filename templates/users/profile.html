@@ -113,13 +113,6 @@
             </div>
     </div>
     </div>
-{% if request.session.alert_message %}
-<script>
-    alert("{{ request.session.alert_message|escapejs }}");
-</script>
-{% endif %}
-{% with request.session.alert_message = None %}
-{% endwith %}
 
 <style>
     .card { border-radius: 0.75rem; }
