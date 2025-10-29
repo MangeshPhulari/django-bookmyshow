@@ -1,4 +1,4 @@
-<!-- {% extends "users/basic.html" %}
+{% extends "users/basic.html" %}
 {% load static %}
 {% load cloudinary %} {# <-- Ensure this is loaded #}
 {% block title %}My Profile{% endblock %}
@@ -113,7 +113,13 @@
             </div>
     </div>
     </div>
-
+{% if messages %}
+<script>
+    {% for message in messages %}
+        alert("{{ message|escapejs }}");
+    {% endfor %}
+</script>
+{% endif %}
 
 <style>
     .card { border-radius: 0.75rem; }
@@ -198,9 +204,9 @@
      .invalid-feedback { display: block; font-size: 0.8em; }
      .rounded-left { border-top-left-radius: 0.25rem!important; border-bottom-left-radius: 0.25rem!important; }
 </style>
-{% endblock %} -->
+{% endblock %}
 
-{% extends "users/basic.html" %}
+<!-- {% extends "users/basic.html" %}
 {% load static %}
 {% load cloudinary %}
 {% block title %}My Profile{% endblock %}
@@ -402,5 +408,5 @@
      .invalid-feedback { display: block; font-size: 0.8em; }
      .rounded-left { border-top-left-radius: 0.25rem!important; border-bottom-left-radius: 0.25rem!important; }
 </style>
-{% endblock %}
+{% endblock %} -->
 
