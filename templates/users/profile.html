@@ -113,13 +113,13 @@
             </div>
     </div>
     </div>
-{% if messages %}
+{% if request.session.alert_message %}
 <script>
-    {% for message in messages %}
-        alert("{{ message|escapejs }}");
-    {% endfor %}
+    alert("{{ request.session.alert_message|escapejs }}");
 </script>
 {% endif %}
+{% with request.session.alert_message = None %}
+{% endwith %}
 
 <style>
     .card { border-radius: 0.75rem; }
