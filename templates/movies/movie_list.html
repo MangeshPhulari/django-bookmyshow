@@ -1,5 +1,5 @@
 {% extends "users/basic.html" %}
-
+{% load cloudinary %} {# <-- Ensure this is loaded #}
 {% block content %}
 <style>
     /* Aspect ratio wrapper for movie images */
@@ -62,7 +62,8 @@
             <div class="card h-100 shadow-sm">
                 <a href="{% url 'movie_detail' movie.pk %}">
                     <div class="img-aspect-wrapper">
-                         <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}">
+                         {# --- USE CLOUDINARY TAG --- #}
+                         <img src="{% cloudinary_url movie.image.name %}" class="card-img-top" alt="{{ movie.name }}">
                     </div>
                 </a>
                 <div class="card-body d-flex flex-column"> 
