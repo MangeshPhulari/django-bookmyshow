@@ -1,10 +1,11 @@
 {% extends "users/basic.html" %}
-
+{% load cloudinary %} {# <-- Ensure this is loaded #}
 {% block content %}
 <div class="container my-5"> 
     <div class="row">
         <div class="col-md-4 mb-4 mb-md-0"> 
-            <img src="{{ movie.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ movie.name }}">
+            {# --- USE CLOUDINARY TAG --- #}
+            <img src="{% cloudinary_url movie.image.name %}" class="img-fluid rounded shadow-sm" alt="{{ movie.name }}">
         </div>
         <div class="col-md-8">
             <h1>{{ movie.name }}</h1>
