@@ -479,7 +479,7 @@ def payment_verification(request):
                 print(f"--- ERROR sending confirmation email via SendGrid for txnid {txnid}: {e} ---")
         # ---------------------------
 
-        # messages.success(request, f"Booking successful for seats: {', '.join(booked_seats_info)}!")
+        messages.success(request, f"Booking successful for seats: {', '.join(booked_seats_info)}!")
         return redirect('profile')
 
     # If GET request to verification URL, redirect away
