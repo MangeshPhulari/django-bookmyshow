@@ -54,14 +54,108 @@ def home_view(request):
     return render(request, 'home.html', context)
 
 # --- Profile View (Corrected Path Saving) ---
+# @login_required
+# def profile(request):
+#     profile, created = Profile.objects.get_or_create(user=request.user)
+#     u_form = UserUpdateForm(instance=request.user)
+#     p_form = ProfileUpdateForm(instance=profile)
+
+#     if request.method == 'POST':
+#         if 'image' in request.FILES:
+#             p_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
+#             if p_form.is_valid():
+#                 image_file = request.FILES['image']
+#                 print(f"--- [Profile Save] Found '{image_file.name}'. Attempting direct Cloudinary upload. ---")
+#                 try:
+#                     image_file.seek(0)
+#                     # We still need the folder for the direct upload call
+#                     result = cloudinary.uploader.upload(
+#                         image_file,
+#                         folder="profile_pics", # Explicitly tell Cloudinary the folder
+#                         use_filename=True,
+#                         unique_filename=False, # Try to keep original name
+#                         overwrite=True
+#                     )
+#                     print("--- [Profile Save] Cloudinary Upload SUCCESS ---")
+#                     # Public ID should be "profile_pics/filename_base"
+#                     print(f"Public ID returned: {result.get('public_id')}")
+#                     print(f"Format returned: {result.get('format')}")
+#                     print("---------------------------------------------")
+
+#                     # --- NEW PATH SAVING LOGIC ---
+#                     # Extract only the filename (base + extension) from the result
+#                     public_id = result.get('public_id') # e.g., "profile_pics/image_name"
+#                     file_format = result.get('format')   # e.g., "png"
+#                     filename_only = None
+
+#                     if public_id and file_format:
+#                         # Get the base filename from the public_id
+#                         base_name = os.path.basename(public_id) # Should be "image_name"
+#                         # Ensure the extension is present
+#                         if not base_name.lower().endswith(f'.{file_format.lower()}'):
+#                             filename_only = f"{base_name}.{file_format}" # Add extension
+#                         else:
+#                             filename_only = base_name # Already includes extension
+#                     else:
+#                         # Fallback
+#                         print(f"--- [Profile Save] CRITICAL WARNING: Missing public_id or format! Using original filename. ---")
+#                         filename_only = image_file.name # Use original uploaded filename
+
+#                     # Save ONLY the filename (e.g., "image_name.png") to the database
+#                     profile.image.name = filename_only
+#                     profile.save(update_fields=['image'])
+#                     print(f"--- [Profile Save] Updated profile.image.name to '{profile.image.name}' (filename only) and saved. ---")
+
+#                     return redirect('profile')
+
+#                 except Exception as e:
+#                     print("--- [Profile Save] Cloudinary Upload FAILED ---")
+#                     print(f"Error: {e}")
+#                     messages.error(request, f"Failed to upload profile picture: {e}")
+#                     u_form = UserUpdateForm(instance=request.user)
+#             else:
+#                  u_form = UserUpdateForm(instance=request.user)
+
+#         elif 'username' in request.POST:
+#             u_form = UserUpdateForm(request.POST, instance=request.user)
+#             if u_form.is_valid():
+#                 u_form.save()
+#                 return redirect('profile')
+#             else:
+#                 p_form = ProfileUpdateForm(instance=profile)
+
+#     # --- Booking logic ---
+#     user_bookings = Booking.objects.filter(user=request.user).order_by('-booked_at')
+#     grouped_bookings = {}
+#     for booking in user_bookings:
+#         if booking.booking_id not in grouped_bookings:
+#              grouped_bookings[booking.booking_id] = {
+#                  'movie': booking.movie,
+#                  'theater': booking.theater,
+#                  'booked_at': booking.booked_at,
+#                  'seats': []
+#              }
+#         grouped_bookings[booking.booking_id]['seats'].append(booking.seat.seat_number)
+
+#     context = {
+#         'u_form': u_form,
+#         'p_form': p_form,
+#         'grouped_bookings': grouped_bookings
+#     }
+#     return render(request, 'users/profile.html', context)
+
+
 @login_required
 def profile(request):
+    # Use get_object_or_404 to ensure profile exists or raise 404
+    # Note: Using signals should ideally handle creation, but get_or_create is safer.
     profile, created = Profile.objects.get_or_create(user=request.user)
     u_form = UserUpdateForm(instance=request.user)
     p_form = ProfileUpdateForm(instance=profile)
 
     if request.method == 'POST':
         if 'image' in request.FILES:
+            # We still validate the form, even if we manually upload
             p_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
             if p_form.is_valid():
                 image_file = request.FILES['image']
@@ -71,36 +165,43 @@ def profile(request):
                     result = cloudinary.uploader.upload(
                         image_file,
                         folder="profile_pics", # Explicitly tell Cloudinary the folder
-                        use_filename=True,
-                        unique_filename=False, # Try to keep original name
+                        public_id=os.path.splitext(image_file.name)[0], # Suggest base name
                         overwrite=True
                     )
                     print("--- [Profile Save] Cloudinary Upload SUCCESS ---")
-                    print(f"Public ID returned: {result.get('public_id')}") # e.g., "profile_pics/image_name"
-                    print(f"Format returned: {result.get('format')}")   # e.g., "png"
+                    print(f"Public ID returned: {result.get('public_id')}")
+                    print(f"Format returned: {result.get('format')}")
                     print("---------------------------------------------")
 
-                    # --- FINAL PATH CORRECTION ---
-                    # Use the public_id returned by Cloudinary (which includes the folder)
-                    # and ensure the extension is present.
+                    # Construct the final correct path
                     public_id = result.get('public_id')
                     file_format = result.get('format')
-
+                    correct_path = None
                     if public_id and file_format:
-                        # Check if Cloudinary already included the extension
                         if not public_id.lower().endswith(f'.{file_format.lower()}'):
-                            correct_path = f"{public_id}.{file_format}" # Add extension
+                            correct_path = f"{public_id}.{file_format}"
                         else:
-                            correct_path = public_id # Already includes folder and extension
+                            correct_path = public_id
                     else:
-                        # Fallback - THIS SHOULD NOT HAPPEN if upload succeeded
-                        print(f"--- [Profile Save] CRITICAL WARNING: Missing public_id or format after successful upload! ---")
-                        correct_path = f"profile_pics/{image_file.name}" # Guess path
+                        print(f"--- [Profile Save] CRITICAL WARNING: Missing public_id or format! ---")
+                        # Fallback might still be wrong if Cloudinary changed name/format
+                        correct_path = os.path.join(Profile._meta.get_field('image').upload_to, image_file.name)
 
-                    # Save the CORRECT path (e.g., "profile_pics/image_name.png")
-                    profile.image.name = correct_path
-                    profile.save(update_fields=['image'])
-                    print(f"--- [Profile Save] Updated profile.image.name to '{profile.image.name}' and saved. ---")
+                    # --- MODIFIED SAVE LOGIC ---
+                    # Use queryset.update() to bypass model save signals/overrides
+                    if correct_path:
+                        updated_count = Profile.objects.filter(pk=profile.pk).update(image=correct_path)
+                        if updated_count > 0:
+                             print(f"--- [Profile Save] Successfully updated profile image path to '{correct_path}' in DB. ---")
+                             # Manually update the instance's field in memory for the redirect context (if needed)
+                             profile.image.name = correct_path
+                        else:
+                             print(f"--- [Profile Save] ERROR: Profile object with pk={profile.pk} not found during update! ---")
+                             messages.error(request, "Could not update profile picture path.")
+
+                    else:
+                         print(f"--- [Profile Save] ERROR: Could not determine correct path to save! ---")
+                         messages.error(request, "Could not determine correct image path after upload.")
 
                     return redirect('profile')
 
@@ -108,7 +209,6 @@ def profile(request):
                     print("--- [Profile Save] Cloudinary Upload FAILED ---")
                     print(f"Error: {e}")
                     messages.error(request, f"Failed to upload profile picture: {e}")
-                    # Keep u_form initialized
                     u_form = UserUpdateForm(instance=request.user)
             else:
                  # If p_form invalid
@@ -121,7 +221,6 @@ def profile(request):
                 u_form.save()
                 return redirect('profile')
             else:
-                # Keep p_form initialized
                 p_form = ProfileUpdateForm(instance=profile)
 
     # --- Booking logic ---
