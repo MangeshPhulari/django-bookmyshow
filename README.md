@@ -1,111 +1,144 @@
-# Django BookMyShow Clone 🎬🎟️
+# BookMySeat - A Django-Powered Movie Ticket Booking Platform
 
-A web application replicating core features of BookMyShow, built using Python and Django. This project allows users to browse movies, view details and trailers, select theaters and showtimes, book seats, and process payments (using PayU test gateway).
+[![Deployment](https://img.shields.io/badge/Render-Deployed-brightgreen?style=for-the-badge&logo=render)](https://bookmyshow-web-e71k.onrender.com/)
+
+**Live Project URL:** [**https://bookmyshow-web-e71k.onrender.com/**](https://bookmyshow-web-e71k.onrender.com/)
+
+A comprehensive clone of the popular BookMyShow website, built from scratch with Python and Django. This application provides a full end-to-end user experience, from browsing movies and selecting seats to processing payments and receiving email confirmations.
+
+---
+
+## 📸 Screenshots
+
+* **Homepage:** Users can browse recommended movies, live events, and premieres.
+    
+* **Movie Details:** Shows movie posters, descriptions, trailers, and filters for future showtimes.
+* **User Profile:** A dedicated dashboard for users to manage their details and view their booking history.
+* **Booking History:** Booked tickets (including seat numbers) appear on the user's profile.
+* **Cloudinary Integration:** All uploaded media is successfully hosted on Cloudinary.
 
 ---
 
 ## ✨ Features
 
-* **Movie Browsing:** View a list of movies with images and basic details.
-* **Filtering & Searching:** Filter movies by **Genre** and **Language**, and search by **Title** or **Cast**.
-* **Movie Details:** View detailed information about a movie, including description, cast, release date, and official rating.
-* **YouTube Trailer Integration:** Watch embedded YouTube trailers directly on the movie detail page.
-* **Theater & Showtime Listing:** See available theaters and showtimes for a selected movie.
-* **Seat Selection:** Interactive seat map showing available, booked, and reserved seats.
-* **User Authentication:** User registration, login, logout, and password reset functionality.
-* **User Profiles:** View profile details, update username/email, and upload a profile picture.
-* **Booking History:** Logged-in users can view their past bookings on their profile page.
-* **Temporary Seat Reservation:** Selected seats are **reserved for 5 minutes** during checkout, with a countdown timer. Seats are automatically released if payment isn't completed.
-* **PayU Payment Gateway Integration:** Simulate payment processing using PayU's test environment.
-* **Email Confirmation:** Receive booking confirmation emails upon successful payment.
-* **Movie Reviews:** Logged-in users can submit ratings (1-5) and comments for movies. Average user ratings are displayed.
-* **Responsive Design:** User interface adapted for various screen sizes using Bootstrap 4.
+* **User Authentication:** Secure user registration, login, logout, and password reset functionality.
+* **Dynamic Movie Listings:** Homepage and movie list pages that pull all movie data directly from the PostgreSQL database.
+* **Showtime Filtering:** Theater and showtime lists are automatically filtered to show only upcoming events (`time__gte=timezone.now()`).
+* **Interactive Seat Selection:** A visual interface for users to select seats for a specific showtime.
+* **Payment Gateway:** Full integration with the **PayU** test gateway for processing payments.
+* **Booking Confirmation & History:** Upon successful payment, seats are marked as "BOOKED," and the booking record appears on the user's profile.
+* **Email Confirmation:** Automatically sends a detailed booking confirmation email to the user upon successful payment, using the **SendGrid** API for reliable delivery.
+* **Cloudinary Media Storage:** All user-uploaded media (movie posters, profile pictures) is hosted on Cloudinary, separate from the application server.
+* **Direct Image Uploads:** A robust custom solution for uploading profile pictures and movie posters directly to Cloudinary, bypassing the limitations of standard `model.save()` in a production environment.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Technology Stack
 
-* **Backend:** Python, Django
-* **Frontend:** HTML, CSS, Bootstrap 4, JavaScript
-* **Database:** SQLite (for development), PostgreSQL (recommended for production)
-* **Payment Gateway:** PayU (Test Environment)
-* **Email:** Django SMTP Email Backend (e.g., using Gmail)
-* **Environment Variables:** python-decouple
-* **Image Handling:** Pillow
-* **Others:** shortuuid (for unique IDs)
+| Category | Technology |
+| :--- | :--- |
+| **Backend** | Python 3.12, Django 5.x, Gunicorn |
+| **Frontend** | HTML5, CSS3, Bootstrap 4, JavaScript |
+| **Database** | PostgreSQL (Production), SQLite3 (Development) |
+| **Deployment** | Render |
+| **Media Storage** | Cloudinary |
+| **Email Service** | SendGrid API |
+| **Payment Gateway**| PayU |
+| **Core Libraries** | `django-cloudinary-storage`, `django-sendgrid-v5`, `whitenoise` |
 
 ---
 
-## 🚀 Local Setup & Installation
+## 🛠️ Local Setup & Installation
 
-Follow these steps to get the project running on your local machine.
+To run this project locally, follow these steps:
 
-1.  **Prerequisites:**
-    * Python 3.9+ ([Download Python](https://www.python.org/downloads/))
-    * `pip` (Python package installer)
-    * Git ([Download Git](https://git-scm.com/downloads/))
-    * (Optional but Recommended) A virtual environment tool (`venv`)
-
-2.  **Clone the Repository:**
+1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/MangeshPhulari/django-bookmyshow.git](https://github.com/MangeshPhulari/django-bookmyshow.git) # Your actual repo URL
+    git clone [https://github.com/MangeshPhulari/django-bookmyshow.git](https://github.com/MangeshPhulari/django-bookmyshow.git)
     cd django-bookmyshow
     ```
 
-3.  **Create and Activate Virtual Environment:**
+2.  **Create and activate a virtual environment:**
     ```bash
-    # Windows
     python -m venv venv
-    .\venv\Scripts\activate
-
-    # macOS / Linux
-    python3 -m venv venv
-    source venv/bin/activate
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
-4.  **Install Dependencies:**
+3.  **Install dependencies:**
     ```bash
     pip install -r requirements.txt
     ```
 
-5.  **Set Up Environment Variables:**
-    * Create a file named `.env` in the project root directory (same level as `manage.py`).
-    * Add the necessary environment variables (see section below).
+4.  **Create a `.env` file** in the project root (`bookmyshow/`) and add your environment variables:
+    ```ini
+    SECRET_KEY='your_django_secret_key'
+    DEBUG=True
 
-6.  **Database Migrations:**
+    # Database (can use default SQLite for local)
+    DATABASE_URL='sqlite:///db.sqlite3'
+
+    # Cloudinary
+    CLOUDINARY_URL='cloudinary://api_key:api_secret@cloud_name'
+
+    # SendGrid (for email)
+    SENDGRID_API_KEY='SG.your_api_key'
+    SENDGRID_FROM_EMAIL='your_verified@email.com'
+
+    # PayU (Test Keys)
+    PAYU_MERCHANT_KEY='your_payu_key'
+    PAYU_MERCHANT_SALT='your_payu_salt'
+    ```
+
+5.  **Run database migrations:**
     ```bash
-    python manage.py makemigrations
     python manage.py migrate
     ```
 
-7.  **Create Superuser (Admin):**
+6.  **Create a superuser** to access the admin panel:
     ```bash
     python manage.py createsuperuser
     ```
-    (Follow the prompts to create an admin account)
 
-8.  **Run Development Server:**
+7.  **Run the development server:**
     ```bash
     python manage.py runserver
     ```
-    The application will be accessible at `http://127.0.0.1:8000/`.
+
+The project will be available at `http://127.0.0.1:8000/`.
 
 ---
 
-## 🔑 Environment Variables
+## ☁️ Production Deployment & Challenges Solved
 
-Create a `.env` file in the project root with the following variables:
+This project was successfully deployed to **Render**. The transition from `DEBUG=True` (local) to `DEBUG=False` (production) introduced several major challenges that were systematically debugged and resolved.
 
-```ini
-# Django
-SECRET_KEY='your_strong_secret_key_here' # Generate a strong random key
-DEBUG=True # Set to False in production
-# DATABASE_URL='your_database_connection_url' # Optional for local SQLite, required for production DB
+### 1. Static & Media Files
+* **Static Files (CSS/JS):** `Whitenoise` was implemented to serve static files collected by `collectstatic`.
+* **Media Files (Images):** `django-cloudinary-storage` was configured. The key challenge was that standard `model.save()` calls were failing to upload images silently.
+    * **Solution:** A direct upload workaround was implemented in `movies/admin.py` and `users/views.py`. This code uses `cloudinary.uploader.upload()` to force the upload and then manually saves the correct Cloudinary path (e.g., `profile_pics/image.png`) to the database using `queryset.update()`, bypassing the default save method's conflict.
 
-# Email (Example using Gmail App Password)
-EMAIL_USER='your_email@gmail.com'
-EMAIL_PASS='your_gmail_app_password' # Use an App Password if using Gmail 2FA
+### 2. 500 Server Errors
+* **Problem:** The live site would crash with 500 errors on the homepage and movie detail pages.
+* **Solution:** The error was traced to the `{% cloudinary_url %}` tag. It was crashing when trying to render an object that had no image (`movie.image.name` was `None`). This was fixed by adding `{% if movie.image and movie.image.name %}` checks in all templates (`home.html`, `movie_detail.html`, `profile.html`) to safely handle movies or profiles without images.
 
-# PayU Test Credentials
-PAYU_MERCHANT_KEY='YBAGb3' # Your PayU test key
-PAYU_MERCHANT_SALT='M4duwyt7y2AO5xS3nuBIzBPKPCO12MWU' # Your PayU test salt
+### 3. Email Confirmation Failures
+* **Problem:** After booking, the app would crash with a 500 error due to a timeout from the Gmail SMTP server.
+* **Solution:** The email backend was migrated to **SendGrid**.
+    * This still resulted in a `403 Forbidden` error from the SendGrid API.
+    * Logs showed the error: `"The from address does not match a verified Sender Identity."`
+    * **Final Fix:** The `SENDGRID_FROM_EMAIL` address was verified in the SendGrid dashboard, and `movies/email_utils.py` was updated to explicitly use `from_email=settings.SENDGRID_FROM_EMAIL` in the `send_mail` function. This resolved all email errors.
+
+---
+
+## 📧 Booking Confirmation Note
+
+When you successfully book a ticket, the system will send a confirmation email via SendGrid.
+
+**Please note:** If you do not see the email in your inbox within a few minutes, **please check your Spam or Junk folder.**
+
+---
+
+## 👨‍💻 Author
+
+**Mangesh Phulari**
+* GitHub: [@MangeshPhulari](https://github.com/MangeshPhulari)
