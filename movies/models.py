@@ -27,40 +27,83 @@ class Movie(models.Model):
         return self.name
 
     # --- THIS FUNCTION HAS BEEN REPLACED ---
+    # def get_youtube_embed_url(self):
+    #     """
+    #     Converts a standard YouTube 'watch' link into an 'embed' link.
+    #     Uses the 'youtube_link' field.
+    #     """
+    #     if not self.youtube_link:
+    #         return None
+        
+    #     video_id = None
+        
+    #     try:
+    #         parsed_url = urlparse(self.youtube_link)
+            
+    #         # Standard link: https://www.youtube.com/watch?v=VIDEO_ID
+    #         if 'watch' in parsed_url.path:
+    #             query = parse_qs(parsed_url.query)
+    #             if 'v' in query:
+    #                 video_id = query['v'][0]
+            
+    #         # Short link: https://youtu.be/VIDEO_ID
+    #         elif 'youtu.be' in parsed_url.netloc:
+    #             video_id = parsed_url.path.lstrip('/')
+
+    #         if video_id:
+    #             # Handle potential extra parameters (like &t=... or ?t=...)
+    #             video_id = video_id.split('&')[0].split('?')[0]
+    #             return f'https://www.youtube.com/embed/{video_id}'
+
+    #     except Exception:
+    #         # Failed to parse, return None
+    #         return None
+        
+    #     # If no valid format is found, return None
+    #     return None    
+
     def get_youtube_embed_url(self):
-        """
-        Converts a standard YouTube 'watch' link into an 'embed' link.
-        Uses the 'youtube_link' field.
-        """
-        if not self.youtube_link:
-            return None
-        
-        video_id = None
-        
-        try:
-            parsed_url = urlparse(self.youtube_link)
-            
-            # Standard link: https://www.youtube.com/watch?v=VIDEO_ID
-            if 'watch' in parsed_url.path:
-                query = parse_qs(parsed_url.query)
-                if 'v' in query:
-                    video_id = query['v'][0]
-            
-            # Short link: https://youtu.be/VIDEO_ID
-            elif 'youtu.be' in parsed_url.netloc:
-                video_id = parsed_url.path.lstrip('/')
-
-            if video_id:
-                # Handle potential extra parameters (like &t=... or ?t=...)
-                video_id = video_id.split('&')[0].split('?')[0]
-                return f'https://www.youtube.com/embed/{video_id}'
-
-        except Exception:
-            # Failed to parse, return None
-            return None
-        
-        # If no valid format is found, return None
+    """
+    Converts YouTube URLs (watch, short, share, etc.) to embed URLs.
+    Supports:
+      https://www.youtube.com/watch?v=ID
+      https://youtu.be/ID
+      https://www.youtube.com/shorts/ID
+    """
+    if not self.youtube_link:
         return None
+
+    url = self.youtube_link.strip()
+    video_id = None
+
+    try:
+        parsed = urlparse(url)
+
+        # Case 1: https://youtu.be/VIDEO_ID
+        if "youtu.be" in parsed.netloc:
+            video_id = parsed.path.lstrip("/")
+
+        # Case 2: https://www.youtube.com/watch?v=VIDEO_ID
+        elif "youtube.com" in parsed.netloc and parsed.path == "/watch":
+            query = parse_qs(parsed.query)
+            video_id = query.get("v", [None])[0]
+
+        # Case 3: https://www.youtube.com/shorts/VIDEO_ID
+        elif "youtube.com" in parsed.netloc and "/shorts/" in parsed.path:
+            video_id = parsed.path.split("/shorts/")[1].split("/")[0]
+
+        if video_id:
+            # Remove any time or tracking params
+            video_id = video_id.split("&")[0].split("?")[0]
+            return f"https://www.youtube.com/embed/{video_id}"
+
+    except Exception:
+        pass
+
+    return None
+
+
+
 
 # ==============================================================================
 # OTHER MODELS
