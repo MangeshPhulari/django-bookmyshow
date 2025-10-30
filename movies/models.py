@@ -114,18 +114,16 @@
 #         return f'Booking by {self.user.username} for {self.seat.seat_number}'
 
 
-# movies/models.py
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
-from django.conf import settings  # Import settings
+from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from urllib.parse import urlparse, parse_qs
 
-
-# ==============================================================================
-# UNIFIED MOVIE MODEL
-# ==============================================================================
+# ======================================================================
+# MOVIE MODEL
+# ======================================================================
 class Movie(models.Model):
     GENRE_CHOICES = [
         ('Action', 'Action'),
@@ -134,14 +132,14 @@ class Movie(models.Model):
         ('Horror', 'Horror'),
         ('Romance', 'Romance'),
         ('Sci-Fi', 'Science Fiction'),
-        ('Thriller', 'Thriller'),
+        ('Thriller', 'Thriller')
     ]
     LANGUAGE_CHOICES = [
         ('English', 'English'),
         ('Hindi', 'Hindi'),
         ('Marathi', 'Marathi'),
         ('Tamil', 'Tamil'),
-        ('Telugu', 'Telugu'),
+        ('Telugu', 'Telugu')
     ]
 
     name = models.CharField(max_length=255)
@@ -150,7 +148,7 @@ class Movie(models.Model):
     release_date = models.DateField()
     genre = models.CharField(max_length=100, choices=GENRE_CHOICES)
     language = models.CharField(max_length=100, choices=LANGUAGE_CHOICES)
-    youtube_link = models.URLField(blank=True)  # Trailer link
+    youtube_link = models.URLField(blank=True, null=True)
     image = models.ImageField(upload_to='movie_images/')
     rating = models.DecimalField(max_digits=3, decimal_places=1, blank=True, null=True)
     added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -160,73 +158,75 @@ class Movie(models.Model):
 
     def get_youtube_embed_url(self):
         """
-        Converts a standard or short YouTube link into an embeddable format.
-        Supports:
-          - https://www.youtube.com/watch?v=VIDEO_ID
-          - https://youtu.be/VIDEO_ID
-          - https://www.youtube.com/shorts/VIDEO_ID
+        Converts a standard YouTube URL into an embeddable link.
+        Supports 'watch?v=', 'youtu.be', and 'embed/' formats.
         """
         if not self.youtube_link:
             return None
 
-        video_id = None
-
         try:
-            parsed_url = urlparse(self.youtube_link.strip())
+            parsed_url = urlparse(self.youtube_link)
+            video_id = None
 
-            # Case 1: Short link -> https://youtu.be/VIDEO_ID
-            if "youtu.be" in parsed_url.netloc:
-                video_id = parsed_url.path.lstrip("/")
-
-            # Case 2: Standard link -> https://www.youtube.com/watch?v=VIDEO_ID
-            elif "youtube.com" in parsed_url.netloc and parsed_url.path == "/watch":
+            # Example: https://www.youtube.com/watch?v=abcd1234
+            if 'youtube.com' in parsed_url.netloc and 'watch' in parsed_url.path:
                 query = parse_qs(parsed_url.query)
-                video_id = query.get("v", [None])[0]
+                video_id = query.get('v', [None])[0]
 
-            # Case 3: Shorts link -> https://www.youtube.com/shorts/VIDEO_ID
-            elif "youtube.com" in parsed_url.netloc and "/shorts/" in parsed_url.path:
-                video_id = parsed_url.path.split("/shorts/")[1].split("/")[0]
+            # Example: https://youtu.be/abcd1234
+            elif 'youtu.be' in parsed_url.netloc:
+                video_id = parsed_url.path.strip('/')
+
+            # Example: https://www.youtube.com/embed/abcd1234
+            elif 'embed' in parsed_url.path:
+                video_id = parsed_url.path.split('/')[-1]
 
             if video_id:
-                video_id = video_id.split("&")[0].split("?")[0]
+                # Remove extra params like ?t=30
+                video_id = video_id.split('&')[0].split('?')[0]
                 return f"https://www.youtube.com/embed/{video_id}"
 
         except Exception:
-            pass
+            return None
 
         return None
 
 
-# ==============================================================================
-# OTHER MODELS
-# ==============================================================================
+# ======================================================================
+# REVIEW MODEL
+# ======================================================================
 class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    movie = models.ForeignKey('Movie', on_delete=models.CASCADE, related_name='reviews')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='reviews')
     comment = models.TextField()
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Review for {self.movie.name} by {self.user.username}'
+        return f"Review for {self.movie.name} by {self.user.username}"
 
 
+# ======================================================================
+# THEATER MODEL
+# ======================================================================
 class Theater(models.Model):
     name = models.CharField(max_length=255)
-    movie = models.ForeignKey('Movie', on_delete=models.CASCADE, related_name='theaters')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='theaters')
     time = models.DateTimeField()
     price = models.DecimalField(max_digits=7, decimal_places=2, default=150.00)
 
     def __str__(self):
-        return f'{self.name} - {self.movie.name} at {self.time.strftime("%d-%b %I:%M %p")}'
+        return f"{self.name} - {self.movie.name} at {self.time.strftime('%d-%b %I:%M %p')}"
 
 
-# --- UPDATED Seat MODEL ---
+# ======================================================================
+# SEAT MODEL
+# ======================================================================
 class Seat(models.Model):
     STATUS_CHOICES = (
         ('AVAILABLE', 'Available'),
-        ('RESERVED', 'Reserved'),  # Temporarily held
-        ('BOOKED', 'Booked'),      # Permanently booked
+        ('RESERVED', 'Reserved'),
+        ('BOOKED', 'Booked'),
     )
     theater = models.ForeignKey(Theater, on_delete=models.CASCADE, related_name='seats')
     seat_number = models.CharField(max_length=10)
@@ -235,17 +235,19 @@ class Seat(models.Model):
     reserved_until = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f'{self.seat_number} in {self.theater.name} ({self.get_status_display()})'
-# --- END Seat UPDATE ---
+        return f"{self.seat_number} in {self.theater.name} ({self.get_status_display()})"
 
 
+# ======================================================================
+# BOOKING MODEL
+# ======================================================================
 class Booking(models.Model):
     booking_id = models.CharField(max_length=100, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
     seat = models.ForeignKey(Seat, on_delete=models.CASCADE)
-    movie = models.ForeignKey('Movie', on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     theater = models.ForeignKey(Theater, on_delete=models.CASCADE)
     booked_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Booking by {self.user.username} for {self.seat.seat_number}'
+        return f"Booking by {self.user.username} for {self.seat.seat_number}"
